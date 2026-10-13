@@ -42,6 +42,8 @@ input{width:100%;padding:12px;border-radius:10px;border:1px solid #355440;backgr
 <div class="fields">
 <div><label for="nome">Nome do jogador</label><input id="nome" placeholder="Nome do jogador" autocomplete="name"></div>
 <div><label for="escalao">Escalão</label><input id="escalao" placeholder="Ex.: Sub-12"></div>
+<div><label for="epoca">Época</label><input id="epoca" placeholder="Ex.: 2026/27"></div>
+<div><label for="equipaCasa">Equipa da casa</label><input id="equipaCasa" placeholder="Equipa da casa"></div>
 <div><label for="adversario">Equipa adversária</label><input id="adversario" placeholder="Adversário"></div>
 <div><label for="data">Dia do jogo</label><input id="data" type="date"></div>
 <div style="grid-column:1/-1"><label for="minutos">Minutos jogados</label><input id="minutos" type="number" min="0" max="150" inputmode="numeric" placeholder="Ex.: 50"></div>
@@ -85,7 +87,10 @@ input{width:100%;padding:12px;border-radius:10px;border:1px solid #355440;backgr
 <p class="note">A nota é um indicador simples, não uma avaliação oficial do treinador. As percentagens só são úteis quando há ações registadas.</p>
 
 <button type="button" class="primary" id="saveBtn">💾 Guardar jogo no histórico</button>
+<button type="button" class="secondary" id="excelBtn">📥 Exportar dados para Excel</button>
 <button type="button" class="danger" id="clearBtn">🗑️ Apagar todo o histórico</button>
+<h2>🏆 Totais gerais</h2>
+<div class="metrics" id="totaisGerais"></div>
 <h2>📚 Histórico de jogos</h2>
 <p class="note">Desliza um jogo para a esquerda para apagar ou para a direita para carregar para edição. Guarda novamente para atualizar o jogo editado.</p>
 <div id="historico"><div class="empty">Ainda não há jogos guardados.</div></div>
@@ -124,7 +129,7 @@ $('m-minutos').textContent=$('minutos').value?$('minutos').value+' min':'—';$(
 const score=stats.golo*1.5+stats.assistencia+stats.passeCerto*.03+stats.dribleGanho*.2+stats.cruzamentoBom*.15+stats.recuperacao*.1-stats.driblePerdido*.1-stats.perda*.2-stats.maDecisao*.1;
 $('m-nota').textContent=Math.max(0,Math.min(10,score)).toLocaleString('pt-PT',{minimumFractionDigits:1,maximumFractionDigits:1})+'/10';
 }
-function readGame(){return{id:editingId||('g'+Date.now()+Math.random().toString(16).slice(2)),nome:$('nome').value.trim(),escalao:$('escalao').value.trim(),adversario:$('adversario').value.trim(),data:$('data').value,minutos:$('minutos').value===''?'':Number($('minutos').value),stats:{...stats}}}
+function readGame(){return{id:editingId||('g'+Date.now()+Math.random().toString(16).slice(2)),nome:$('nome').value.trim(),escalao:$('escalao').value.trim(),epoca:$('epoca').value.trim(),equipaCasa:$('equipaCasa').value.trim(),adversario:$('adversario').value.trim(),data:$('data').value,minutos:$('minutos').value===''?'':Number($('minutos').value),stats:{...stats}}}
 function guardarJogo(){
 const game=readGame();if(!game.nome&&!game.adversario&&!game.data&&!STAT_KEYS.some(k=>stats[k])){toast('Preenche os dados ou regista pelo menos uma ação.');return}
 const games=getGames();
@@ -134,24 +139,27 @@ setGames(games);renderHistory();stats=emptyStats();actionStack=[];update();
 }
 $('saveBtn').addEventListener('click',guardarJogo);
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function renderTotals(){const games=getGames(),sum=emptyStats();let minutos=0;games.forEach(g=>{const s={...emptyStats(),...(g.stats||{})};STAT_KEYS.forEach(k=>sum[k]+=Number(s[k])||0);minutos+=Number(g.minutos)||0});const passes=sum.passeCerto+sum.passeErrado,remates=sum.remateBaliza+sum.remateFalhado,dribles=sum.dribleGanho+sum.driblePerdido;$('totaisGerais').innerHTML=`<div class="metric"><span>Jogos</span><strong>${games.length}</strong></div><div class="metric"><span>Golos</span><strong>${sum.golo}</strong></div><div class="metric"><span>Assistências</span><strong>${sum.assistencia}</strong></div><div class="metric"><span>Remates</span><strong>${remates}</strong><em>${sum.remateBaliza} à baliza</em></div><div class="metric"><span>Dribles</span><strong>${sum.dribleGanho}/${dribles}</strong><em>${sum.driblePerdido} errados</em></div><div class="metric"><span>Passes</span><strong>${sum.passeCerto}/${passes}</strong><em>${pct(sum.passeCerto,passes)}% acerto</em></div><div class="metric"><span>Minutos</span><strong>${minutos}</strong></div>`}
 function renderHistory(){
-const games=getGames(),host=$('historico');
+const games=getGames(),host=$('historico');renderTotals();
 if(!games.length){host.innerHTML='<div class="empty">Ainda não há jogos guardados.</div>';return}
 host.innerHTML=games.map(g=>{const s={...emptyStats(),...(g.stats||{})},p=pct(s.passeCerto,s.passeCerto+s.passeErrado),d=pct(s.dribleGanho,s.dribleGanho+s.driblePerdido);
-return `<div class="game" data-id="${esc(g.id)}"><b>${esc(g.nome||'Jogador')}</b> · ${esc(g.escalao||'Sem escalão')}<p>🆚 ${esc(g.adversario||'Sem adversário')} · 📅 ${esc(g.data||'Sem data')}</p><p>⚽ ${s.golo} golos · 🅰️ ${s.assistencia} assistências · Passes ${p}% · Dribles ${d}% · ⏱️ ${esc(g.minutos||0)} min</p><div class="hint">← deslizar para apagar · deslizar → para editar</div></div>`}).join('');
+return `<div class="game" data-id="${esc(g.id)}"><b>${esc(g.nome||'Jogador')}</b> · ${esc(g.escalao||'Sem escalão')}<p>🏠 ${esc(g.equipaCasa||'Equipa da casa')} vs 🆚 ${esc(g.adversario||'Sem adversário')} · 📅 ${esc(g.data||'Sem data')} · ${esc(g.epoca||'Sem época')}</p><p>⚽ ${s.golo} golos · 🅰️ ${s.assistencia} assistências · Remates ${s.remateBaliza+s.remateFalhado} · Passes ${p}% · Dribles ${d}% · ⏱️ ${esc(g.minutos||0)} min</p><div class="hint">← deslizar para apagar · deslizar → para editar</div></div>`}).join('');
 }
 function deleteGame(id){if(!confirm('Apagar este jogo do histórico?'))return;setGames(getGames().filter(g=>String(g.id)!==String(id)));renderHistory();toast('Jogo apagado.')}
 function loadGame(id){
 const g=getGames().find(x=>String(x.id)===String(id));if(!g)return;
 if(actionStack.length&&!confirm('Carregar este jogo vai substituir as estatísticas atuais não guardadas. Continuar?'))return;
-$('nome').value=g.nome||'';$('escalao').value=g.escalao||'';$('adversario').value=g.adversario||'';$('data').value=g.data||'';$('minutos').value=g.minutos??'';
+$('nome').value=g.nome||'';$('escalao').value=g.escalao||'';$('epoca').value=g.epoca||'';$('equipaCasa').value=g.equipaCasa||'';$('adversario').value=g.adversario||'';$('data').value=g.data||'';$('minutos').value=g.minutos??'';
 stats={...emptyStats(),...(g.stats||{})};actionStack=[];editingId=g.id;$('saveBtn').textContent='💾 Atualizar jogo guardado';update();window.scrollTo({top:0,behavior:'smooth'});toast('Jogo carregado. Guarda para atualizar.');
 }
 let histTouch=null;
 $('historico').addEventListener('touchstart',e=>{const card=e.target.closest('.game');if(card)histTouch={id:card.dataset.id,x:e.changedTouches[0].screenX,y:e.changedTouches[0].screenY};},{passive:true});
 $('historico').addEventListener('touchend',e=>{if(!histTouch)return;const dx=e.changedTouches[0].screenX-histTouch.x,dy=e.changedTouches[0].screenY-histTouch.y;if(Math.abs(dx)>60&&Math.abs(dx)>Math.abs(dy)){if(dx<0)deleteGame(histTouch.id);else loadGame(histTouch.id)}histTouch=null;},{passive:true});
 $('clearBtn').addEventListener('click',()=>{if(confirm('Tens a certeza que queres apagar TODO o histórico? Esta ação não pode ser anulada.')){localStorage.removeItem('jogos');editingId=null;renderHistory();toast('Histórico apagado.')}});
-$('data').value=new Date().toLocaleDateString('en-CA');update();renderHistory();
+function exportExcel(){const headers=['Jogador','Escalão','Época','Data','Equipa da casa','Adversário','Minutos','Golos','Assistências','Remates à baliza','Remates falhados','Passes certos','Passes errados','Dribles ganhos','Dribles errados','Cruzamentos bons','Cruzamentos falhados','Recuperações','Perdas de bola','Boas decisões','Más decisões'];const games=getGames();if(!games.length){toast('Ainda não há jogos para exportar.');return}const x=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]));const rows=games.map(g=>{const s={...emptyStats(),...(g.stats||{})};return[g.nome,g.escalao,g.epoca,g.data,g.equipaCasa,g.adversario,g.minutos,s.golo,s.assistencia,s.remateBaliza,s.remateFalhado,s.passeCerto,s.passeErrado,s.dribleGanho,s.driblePerdido,s.cruzamentoBom,s.cruzamentoFalhado,s.recuperacao,s.perda,s.boaDecisao,s.maDecisao]});const table=[headers,...rows].map(r=>'<Row>'+r.map(v=>'<Cell><Data ss:Type="String">'+x(v)+'</Data></Cell>').join('')+'</Row>').join('');const xml='<?xml version="1.0"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"><Worksheet ss:Name="Estatísticas"><Table>'+table+'</Table></Worksheet></Workbook>';const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([xml],{type:'application/vnd.ms-excel'}));a.download='estatisticas-futebol.xls';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500)}
+$('excelBtn').addEventListener('click',exportExcel);$('data').value=new Date().toLocaleDateString('en-CA');update();renderHistory();renderTotals();
 </script>
 </body>
 </html>
+
