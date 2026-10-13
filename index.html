@@ -1,232 +1,157 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-PT">
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Scouting Futebol</title>
-
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#10251b">
+<title>Meu Futebol — Scouting</title>
 <style>
-body {
-  font-family: Arial;
-  text-align: center;
-  padding: 10px;
-}
-
-input {
-  padding: 10px;
-  width: 80%;
-  margin: 5px;
-}
-
-.card {
-  margin: 8px;
-  padding: 18px;
-  border-radius: 15px;
-  font-size: 20px;
-  color: white;
-}
-
-.green { background: #4CAF50; }
-.red { background: #f44336; }
-.blue { background: #2196F3; }
-
-h2 { margin-top: 20px; }
+:root{--bg:#0b1510;--panel:#14251b;--panel2:#1b3224;--green:#25a55b;--red:#d94b4b;--blue:#287bd1;--gold:#f0c75e;--text:#f4f7f4;--muted:#b5c4b9}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Arial,sans-serif;padding:14px 12px 35px;max-width:760px;margin-inline:auto}
+header{text-align:center;padding:8px 0 16px}
+h1{font-size:27px;margin:0 0 4px}.sub{color:var(--muted);font-size:13px}
+h2{font-size:18px;margin:20px 0 10px}
+.panel{background:var(--panel);border:1px solid #294334;border-radius:16px;padding:13px;margin-bottom:12px}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+label{display:block;color:var(--muted);font-size:12px;margin:0 0 4px}
+input{width:100%;padding:12px;border-radius:10px;border:1px solid #355440;background:#09120d;color:var(--text);font-size:16px;min-width:0}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.action{border:0;border-radius:13px;padding:15px 8px;min-height:75px;color:white;font-weight:750;font-size:16px;line-height:1.2;box-shadow:0 3px 0 #0003;touch-action:pan-y;user-select:none;-webkit-user-select:none}
+.action small{display:block;font-size:12px;font-weight:500;opacity:.85;margin-top:5px}
+.pos{background:var(--green)}.neg{background:var(--red)}.neutral{background:#3b6850}
+.action:active,.primary:active{transform:scale(.98);filter:brightness(1.08)}
+.metrics{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.metric{background:var(--panel2);border-radius:12px;padding:11px;text-align:left}
+.metric span{display:block;color:var(--muted);font-size:12px}.metric strong{display:block;font-size:24px;margin-top:3px}.metric em{font-size:12px;color:var(--gold);font-style:normal}
+.primary,.danger,.secondary{border:0;border-radius:12px;padding:14px;width:100%;font-size:16px;font-weight:750;color:white;margin-top:8px}
+.primary{background:var(--blue)}.danger{background:#8f3030}.secondary{background:#355440}
+.game{border:1px solid #355440;border-radius:12px;padding:12px;margin:9px 0;background:#102017;touch-action:pan-y;user-select:none}
+.game b{font-size:16px}.game p{margin:5px 0;color:var(--muted);font-size:13px}.game .hint{color:var(--gold);font-size:11px}
+.empty{color:var(--muted);font-size:13px;padding:8px}
+.note{font-size:12px;color:var(--muted);line-height:1.45}
+#toast{position:sticky;bottom:8px;text-align:center;color:#fff;background:#263c2e;border:1px solid #45634d;padding:9px;border-radius:10px;display:none}
+@media(min-width:600px){.actions{grid-template-columns:repeat(3,1fr)}.metrics{grid-template-columns:repeat(3,1fr)}}
 </style>
 </head>
-
 <body>
+<header><h1>⚽ Meu Futebol</h1><div class="sub">Scouting rápido • tocar = +1 • deslizar para a esquerda = desfazer última ação</div></header>
 
-<h2>📋 Dados do Jogo</h2>
-<input type="text" id="nome" placeholder="Nome jogador"><br>
-<input type="text" id="escalao" placeholder="Escalão"><br>
-<input type="text" id="adversario" placeholder="Adversário"><br>
-<input type="date" id="data"><br>
+<section class="panel">
+<h2 style="margin-top:0">📋 Dados do jogo</h2>
+<div class="fields">
+<div><label for="nome">Nome do jogador</label><input id="nome" placeholder="Nome do jogador" autocomplete="name"></div>
+<div><label for="escalao">Escalão</label><input id="escalao" placeholder="Ex.: Sub-12"></div>
+<div><label for="adversario">Equipa adversária</label><input id="adversario" placeholder="Adversário"></div>
+<div><label for="data">Dia do jogo</label><input id="data" type="date"></div>
+<div style="grid-column:1/-1"><label for="minutos">Minutos jogados</label><input id="minutos" type="number" min="0" max="150" inputmode="numeric" placeholder="Ex.: 50"></div>
+</div></section>
 
-<h2>⚽ Ações (toque = + / deslizar esquerda = desfazer)</h2>
+<h2>🎮 Ações do jogo</h2>
+<div class="actions" id="actions">
+<button type="button" class="action pos" data-stat="golo">⚽ Golo<small id="count-golo">0</small></button>
+<button type="button" class="action pos" data-stat="assistencia">🅰️ Assistência<small id="count-assistencia">0</small></button>
+<button type="button" class="action pos" data-stat="remateBaliza">🎯 Remate à baliza<small id="count-remateBaliza">0</small></button>
+<button type="button" class="action neg" data-stat="remateFalhado">❌ Remate falhado<small id="count-remateFalhado">0</small></button>
+<button type="button" class="action pos" data-stat="passeCerto">✅ Passe certo<small id="count-passeCerto">0</small></button>
+<button type="button" class="action neg" data-stat="passeErrado">❌ Passe errado<small id="count-passeErrado">0</small></button>
+<button type="button" class="action pos" data-stat="dribleGanho">🟢 Drible ganho<small id="count-dribleGanho">0</small></button>
+<button type="button" class="action neg" data-stat="driblePerdido">🔴 Drible perdido<small id="count-driblePerdido">0</small></button>
+<button type="button" class="action pos" data-stat="cruzamentoBom">📨 Cruzamento bom<small id="count-cruzamentoBom">0</small></button>
+<button type="button" class="action neg" data-stat="cruzamentoFalhado">📭 Cruzamento falhado<small id="count-cruzamentoFalhado">0</small></button>
+<button type="button" class="action pos" data-stat="recuperacao">🛡️ Recuperação<small id="count-recuperacao">0</small></button>
+<button type="button" class="action neg" data-stat="perda">⚠️ Perda de bola<small id="count-perda">0</small></button>
+<button type="button" class="action pos" data-stat="boaDecisao">🧠 Boa decisão<small id="count-boaDecisao">0</small></button>
+<button type="button" class="action neg" data-stat="maDecisao">⚠️ Má decisão<small id="count-maDecisao">0</small></button>
+</div>
+<button type="button" class="secondary" id="undoBtn">↩️ Desfazer última ação</button>
+<p class="note">Toca num botão para somar uma ação. Desliza para a esquerda sobre um botão para desfazer a última ação registada.</p>
 
-<div class="card green" ontouchstart="startTouch(event,'golo')" ontouchend="endTouch(event,'golo')">⚽ Golo</div>
-<div class="card green" ontouchstart="startTouch(event,'assistencia')" ontouchend="endTouch(event,'assistencia')">🅰️ Assistência</div>
+<h2>📊 Estatísticas em direto</h2>
+<div class="metrics">
+<div class="metric"><span>Golos</span><strong id="m-golo">0</strong></div>
+<div class="metric"><span>Assistências</span><strong id="m-assistencia">0</strong></div>
+<div class="metric"><span>Passes certos</span><strong id="m-passes">0/0</strong><em id="m-passPct">0% de acerto</em></div>
+<div class="metric"><span>Remates à baliza</span><strong id="m-remates">0/0</strong><em id="m-shotPct">0% à baliza</em></div>
+<div class="metric"><span>Dribles ganhos</span><strong id="m-dribles">0/0</strong><em id="m-driblePct">0% de sucesso</em></div>
+<div class="metric"><span>Cruzamentos bons</span><strong id="m-cruzamentos">0/0</strong><em id="m-crossPct">0% de sucesso</em></div>
+<div class="metric"><span>Recuperações</span><strong id="m-recuperacao">0</strong></div>
+<div class="metric"><span>Perdas de bola</span><strong id="m-perda">0</strong></div>
+<div class="metric"><span>Decisões boas</span><strong id="m-decisoes">0/0</strong><em id="m-decisaoPct">0% boas</em></div>
+<div class="metric"><span>Minutos jogados</span><strong id="m-minutos">—</strong></div>
+<div class="metric"><span>Golos + assistências</span><strong id="m-ga">0</strong></div>
+<div class="metric"><span>Nota indicativa</span><strong id="m-nota">0,0/10</strong></div>
+</div>
+<p class="note">A nota é um indicador simples, não uma avaliação oficial do treinador. As percentagens só são úteis quando há ações registadas.</p>
 
-<div class="card green" ontouchstart="startTouch(event,'remate')" ontouchend="endTouch(event,'remate')">🎯 Remate</div>
-<div class="card red" ontouchstart="startTouch(event,'falhado')" ontouchend="endTouch(event,'falhado')">❌ Remate Falhado</div>
-
-<div class="card green" ontouchstart="startTouch(event,'passeCerto')" ontouchend="endTouch(event,'passeCerto')">✅ Passe Certo</div>
-<div class="card red" ontouchstart="startTouch(event,'passeErrado')" ontouchend="endTouch(event,'passeErrado')">❌ Passe Errado</div>
-
-<div class="card green" ontouchstart="startTouch(event,'dribleGanho')" ontouchend="endTouch(event,'dribleGanho')">🟢 Drible Ganho</div>
-<div class="card red" ontouchstart="startTouch(event,'driblePerdido')" ontouchend="endTouch(event,'driblePerdido')">🔴 Drible Perdido</div>
-
-<div class="card green" ontouchstart="startTouch(event,'recuperacao')" ontouchend="endTouch(event,'recuperacao')">🛑 Recuperação</div>
-<div class="card red" ontouchstart="startTouch(event,'perda')" ontouchend="endTouch(event,'perda')">❌ Perda</div>
-
-<div class="card blue" onclick="guardarJogo()">💾 Guardar Jogo</div>
-<div class="card red" onclick="apagarHistorico()">🗑️ Apagar Histórico</div>
-
-<h2>📊 Estatísticas</h2>
-<p>⚽ Golos: <span id="golos">0</span></p>
-<p>🅰️ Assistências: <span id="assistencias">0</span></p>
-<p>📈 % Passes: <span id="passes">0%</span></p>
-<p>🔥 % Dribles: <span id="dribles">0%</span></p>
-<p>⭐ Nota: <span id="nota">0</span></p>
-
-<h2>📚 Histórico (swipe ← apagar | swipe → editar)</h2>
-<div id="historico"></div>
+<button type="button" class="primary" id="saveBtn">💾 Guardar jogo no histórico</button>
+<button type="button" class="danger" id="clearBtn">🗑️ Apagar todo o histórico</button>
+<h2>📚 Histórico de jogos</h2>
+<p class="note">Desliza um jogo para a esquerda para apagar ou para a direita para carregar para edição. Guarda novamente para atualizar o jogo editado.</p>
+<div id="historico"><div class="empty">Ainda não há jogos guardados.</div></div>
+<div id="toast" role="status"></div>
 
 <script>
-let stats = {
-  golo:0, assistencia:0, remate:0, falhado:0,
-  passeCerto:0, passeErrado:0,
-  dribleGanho:0, driblePerdido:0,
-  recuperacao:0, perda:0
-};
-
-let touchStartX = 0;
-
-function startTouch(e,tipo){
-  touchStartX = e.changedTouches[0].screenX;
-}
-
-function endTouch(e,tipo){
-  let touchEndX = e.changedTouches[0].screenX;
-
-  if(touchEndX < touchStartX - 50){
-    if(stats[tipo] > 0) stats[tipo]--;
-  } else {
-    stats[tipo]++;
-  }
-
-  update();
-}
-
+'use strict';
+const STAT_KEYS=['golo','assistencia','remateBaliza','remateFalhado','passeCerto','passeErrado','dribleGanho','driblePerdido','cruzamentoBom','cruzamentoFalhado','recuperacao','perda','boaDecisao','maDecisao'];
+const LABELS={golo:'Golo',assistencia:'Assistência',remateBaliza:'Remate à baliza',remateFalhado:'Remate falhado',passeCerto:'Passe certo',passeErrado:'Passe errado',dribleGanho:'Drible ganho',driblePerdido:'Drible perdido',cruzamentoBom:'Cruzamento bom',cruzamentoFalhado:'Cruzamento falhado',recuperacao:'Recuperação',perda:'Perda de bola',boaDecisao:'Boa decisão',maDecisao:'Má decisão'};
+const $=id=>document.getElementById(id);
+const emptyStats=()=>Object.fromEntries(STAT_KEYS.map(k=>[k,0]));
+const pct=(a,b)=>b?Math.round(a/b*100):0;
+let stats=emptyStats(),actionStack=[],editingId=null;
+function toast(msg){$('toast').textContent=msg;$('toast').style.display='block';clearTimeout(toast.timer);toast.timer=setTimeout(()=>$('toast').style.display='none',2200)}
+function getGames(){try{const v=JSON.parse(localStorage.getItem('jogos')||'[]');return Array.isArray(v)?v:[]}catch(e){return []}}
+function setGames(g){localStorage.setItem('jogos',JSON.stringify(g))}
+function addStat(key){stats[key]=(stats[key]||0)+1;actionStack.push(key);update()}
+function undo(){const key=actionStack.pop();if(!key){toast('Não há ações para desfazer.');return}stats[key]=Math.max(0,(stats[key]||0)-1);update();toast('Anulado: '+LABELS[key])}
+$('actions').addEventListener('click',e=>{const b=e.target.closest('button[data-stat]');if(b)addStat(b.dataset.stat)});
+$('undoBtn').addEventListener('click',undo);
+let actionTouch=null, suppressClickUntil=0;
+$('actions').addEventListener('touchstart',e=>{const b=e.target.closest('button[data-stat]');if(b)actionTouch={x:e.changedTouches[0].screenX,y:e.changedTouches[0].screenY};},{passive:true});
+$('actions').addEventListener('touchend',e=>{if(!actionTouch)return;const dx=e.changedTouches[0].screenX-actionTouch.x,dy=e.changedTouches[0].screenY-actionTouch.y;if(dx < -55 && Math.abs(dx)>Math.abs(dy)){suppressClickUntil=Date.now()+700;undo()}actionTouch=null;},{passive:true});
+$('actions').addEventListener('click',e=>{if(Date.now()<suppressClickUntil){e.stopImmediatePropagation();e.preventDefault()}},true);
 function update(){
-  document.getElementById("golos").innerText = stats.golo;
-  document.getElementById("assistencias").innerText = stats.assistencia;
-
-  let totalPasses = stats.passeCerto + stats.passeErrado;
-  let percentPasses = totalPasses ? Math.round((stats.passeCerto/totalPasses)*100) : 0;
-  document.getElementById("passes").innerText = percentPasses + "%";
-
-  let totalDribles = stats.dribleGanho + stats.driblePerdido;
-  let percentDribles = totalDribles ? Math.round((stats.dribleGanho/totalDribles)*100) : 0;
-  document.getElementById("dribles").innerText = percentDribles + "%";
-
-  let nota = (
-    stats.golo*1.5 +
-    stats.assistencia*1 +
-    stats.passeCerto*0.1 +
-    stats.dribleGanho*0.3 -
-    stats.driblePerdido*0.2 -
-    stats.perda*0.3
-  );
-
-  nota = Math.max(0, Math.min(10, nota.toFixed(1)));
-  document.getElementById("nota").innerText = nota;
+const tp=stats.passeCerto+stats.passeErrado,ts=stats.remateBaliza+stats.remateFalhado,td=stats.dribleGanho+stats.driblePerdido,tc=stats.cruzamentoBom+stats.cruzamentoFalhado,tdec=stats.boaDecisao+stats.maDecisao;
+STAT_KEYS.forEach(k=>{const el=$('count-'+k);if(el)el.textContent=stats[k]||0});
+$('m-golo').textContent=stats.golo;$('m-assistencia').textContent=stats.assistencia;
+$('m-passes').textContent=stats.passeCerto+'/'+tp;$('m-passPct').textContent=pct(stats.passeCerto,tp)+'% de acerto';
+$('m-remates').textContent=stats.remateBaliza+'/'+ts;$('m-shotPct').textContent=pct(stats.remateBaliza,ts)+'% à baliza';
+$('m-dribles').textContent=stats.dribleGanho+'/'+td;$('m-driblePct').textContent=pct(stats.dribleGanho,td)+'% de sucesso';
+$('m-cruzamentos').textContent=stats.cruzamentoBom+'/'+tc;$('m-crossPct').textContent=pct(stats.cruzamentoBom,tc)+'% de sucesso';
+$('m-recuperacao').textContent=stats.recuperacao;$('m-perda').textContent=stats.perda;
+$('m-decisoes').textContent=stats.boaDecisao+'/'+tdec;$('m-decisaoPct').textContent=pct(stats.boaDecisao,tdec)+'% boas';
+$('m-minutos').textContent=$('minutos').value?$('minutos').value+' min':'—';$('m-ga').textContent=stats.golo+stats.assistencia;
+const score=stats.golo*1.5+stats.assistencia+stats.passeCerto*.03+stats.dribleGanho*.2+stats.cruzamentoBom*.15+stats.recuperacao*.1-stats.driblePerdido*.1-stats.perda*.2-stats.maDecisao*.1;
+$('m-nota').textContent=Math.max(0,Math.min(10,score)).toLocaleString('pt-PT',{minimumFractionDigits:1,maximumFractionDigits:1})+'/10';
 }
-
+function readGame(){return{id:editingId||('g'+Date.now()+Math.random().toString(16).slice(2)),nome:$('nome').value.trim(),escalao:$('escalao').value.trim(),adversario:$('adversario').value.trim(),data:$('data').value,minutos:$('minutos').value===''?'':Number($('minutos').value),stats:{...stats}}}
 function guardarJogo(){
-  let jogo = {
-    nome: nome.value,
-    escalao: escalao.value,
-    adversario: adversario.value,
-    data: data.value,
-    stats: {...stats}
-  };
-
-  let jogos = JSON.parse(localStorage.getItem("jogos")) || [];
-  jogos.push(jogo);
-  localStorage.setItem("jogos", JSON.stringify(jogos));
-
-  mostrarHistorico();
-  resetStats();
+const game=readGame();if(!game.nome&&!game.adversario&&!game.data&&!STAT_KEYS.some(k=>stats[k])){toast('Preenche os dados ou regista pelo menos uma ação.');return}
+const games=getGames();
+if(editingId){const i=games.findIndex(g=>g.id===editingId);if(i>=0)games[i]=game;else games.unshift(game);editingId=null;$('saveBtn').textContent='💾 Guardar jogo no histórico';toast('Jogo atualizado.')}
+else{games.unshift(game);toast('Jogo guardado.')}
+setGames(games);renderHistory();stats=emptyStats();actionStack=[];update();
 }
-
-function apagarHistorico(){
-  if(confirm("Apagar todo o histórico?")){
-    localStorage.removeItem("jogos");
-    mostrarHistorico();
-  }
+$('saveBtn').addEventListener('click',guardarJogo);
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function renderHistory(){
+const games=getGames(),host=$('historico');
+if(!games.length){host.innerHTML='<div class="empty">Ainda não há jogos guardados.</div>';return}
+host.innerHTML=games.map(g=>{const s={...emptyStats(),...(g.stats||{})},p=pct(s.passeCerto,s.passeCerto+s.passeErrado),d=pct(s.dribleGanho,s.dribleGanho+s.driblePerdido);
+return `<div class="game" data-id="${esc(g.id)}"><b>${esc(g.nome||'Jogador')}</b> · ${esc(g.escalao||'Sem escalão')}<p>🆚 ${esc(g.adversario||'Sem adversário')} · 📅 ${esc(g.data||'Sem data')}</p><p>⚽ ${s.golo} golos · 🅰️ ${s.assistencia} assistências · Passes ${p}% · Dribles ${d}% · ⏱️ ${esc(g.minutos||0)} min</p><div class="hint">← deslizar para apagar · deslizar → para editar</div></div>`}).join('');
 }
-
-let touchStartXHist = 0;
-
-function startTouchHist(e,index){
-  touchStartXHist = e.changedTouches[0].screenX;
+function deleteGame(id){if(!confirm('Apagar este jogo do histórico?'))return;setGames(getGames().filter(g=>String(g.id)!==String(id)));renderHistory();toast('Jogo apagado.')}
+function loadGame(id){
+const g=getGames().find(x=>String(x.id)===String(id));if(!g)return;
+if(actionStack.length&&!confirm('Carregar este jogo vai substituir as estatísticas atuais não guardadas. Continuar?'))return;
+$('nome').value=g.nome||'';$('escalao').value=g.escalao||'';$('adversario').value=g.adversario||'';$('data').value=g.data||'';$('minutos').value=g.minutos??'';
+stats={...emptyStats(),...(g.stats||{})};actionStack=[];editingId=g.id;$('saveBtn').textContent='💾 Atualizar jogo guardado';update();window.scrollTo({top:0,behavior:'smooth'});toast('Jogo carregado. Guarda para atualizar.');
 }
-
-function endTouchHist(e,index){
-  let touchEndX = e.changedTouches[0].screenX;
-
-  if(touchEndX < touchStartXHist - 50){
-    apagarJogo(index);
-  } else if(touchEndX > touchStartXHist + 50){
-    editarJogo(index);
-  }
-}
-
-function apagarJogo(index){
-  let jogos = JSON.parse(localStorage.getItem("jogos")) || [];
-  if(confirm("Apagar este jogo?")){
-    jogos.splice(index,1);
-    localStorage.setItem("jogos", JSON.stringify(jogos));
-    mostrarHistorico();
-  }
-}
-
-function editarJogo(index){
-  let jogos = JSON.parse(localStorage.getItem("jogos")) || [];
-  let j = jogos[index];
-
-  nome.value = j.nome;
-  escalao.value = j.escalao;
-  adversario.value = j.adversario;
-  data.value = j.data;
-
-  stats = {...j.stats};
-  update();
-
-  jogos.splice(index,1);
-  localStorage.setItem("jogos", JSON.stringify(jogos));
-
-  mostrarHistorico();
-
-  alert("✏️ Edita e guarda novamente");
-}
-
-function mostrarHistorico(){
-  let jogos = JSON.parse(localStorage.getItem("jogos")) || [];
-  let html = "";
-
-  jogos.forEach((j,index)=>{
-    let p = Math.round((j.stats.passeCerto/(j.stats.passeCerto+j.stats.passeErrado||1))*100);
-    let d = Math.round((j.stats.dribleGanho/(j.stats.dribleGanho+j.stats.driblePerdido||1))*100);
-
-    html += `
-    <div ontouchstart="startTouchHist(event,${index})"
-         ontouchend="endTouchHist(event,${index})"
-         style="border:1px solid #ccc;margin:10px;padding:10px;border-radius:10px;">
-      <b>${j.nome}</b> (${j.escalao})<br>
-      🆚 ${j.adversario}<br>
-      📅 ${j.data}<br>
-      ⚽ ${j.stats.golo} | 🅰️ ${j.stats.assistencia}<br>
-      📈 ${p}% | 🔥 ${d}%
-    </div>
-    `;
-  });
-
-  historico.innerHTML = html;
-}
-
-function resetStats(){
-  stats = {
-    golo:0, assistencia:0, remate:0, falhado:0,
-    passeCerto:0, passeErrado:0,
-    dribleGanho:0, driblePerdido:0,
-    recuperacao:0, perda:0
-  };
-  update();
-}
-
-mostrarHistorico();
+let histTouch=null;
+$('historico').addEventListener('touchstart',e=>{const card=e.target.closest('.game');if(card)histTouch={id:card.dataset.id,x:e.changedTouches[0].screenX,y:e.changedTouches[0].screenY};},{passive:true});
+$('historico').addEventListener('touchend',e=>{if(!histTouch)return;const dx=e.changedTouches[0].screenX-histTouch.x,dy=e.changedTouches[0].screenY-histTouch.y;if(Math.abs(dx)>60&&Math.abs(dx)>Math.abs(dy)){if(dx<0)deleteGame(histTouch.id);else loadGame(histTouch.id)}histTouch=null;},{passive:true});
+$('clearBtn').addEventListener('click',()=>{if(confirm('Tens a certeza que queres apagar TODO o histórico? Esta ação não pode ser anulada.')){localStorage.removeItem('jogos');editingId=null;renderHistory();toast('Histórico apagado.')}});
+$('data').value=new Date().toLocaleDateString('en-CA');update();renderHistory();
 </script>
-
 </body>
 </html>
